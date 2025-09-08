@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-// Firebase: Importamos la configuración desde tu archivo config.js
-import { db } from '../firebase/config'; 
+// Firebase: Corregimos la ruta de importación para que sea más robusta
+import { db } from '@/firebase/config'; 
 import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 
 // --- Componente Principal de la Página ---
@@ -111,13 +111,22 @@ function RegisterView() {
       const personData = personDoc.data();
 
       try {
+        // --- INICIO DE LA CORRECCIÓN ---
+        // Forzamos el uso de la fecha local en lugar de UTC
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const localDate = `${year}-${month}-${day}`;
+        // --- FIN DE LA CORRECCIÓN ---
+
         await addDoc(collection(db, "asistencias"), {
           personId: personData.id,
           personName: personData.name,
           personType: personData.type,
           type: scanType,
           timestamp: new Date(),
-          date: new Date().toISOString().split('T')[0]
+          date: localDate // Usamos la fecha local corregida
         });
         setScanStatus({ message: `✅ ¡Listo! ${personData.name} registró su ${scanType}.`, type: 'success' });
       } catch (error) {
@@ -151,7 +160,15 @@ function RegisterView() {
 }
 
 function ReportsView() {
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    // Corregimos también la fecha inicial para que sea la local
+    const getLocalDate = () => {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    const [date, setDate] = useState(getLocalDate());
     const [reportData, setReportData] = useState({ students: [], teachers: [] });
 
     useEffect(() => {
